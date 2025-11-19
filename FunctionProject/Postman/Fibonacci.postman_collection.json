@@ -1,0 +1,25 @@
+{
+  "info": {
+    "name": "Fibonacci Azure Function",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Calcular Fibonacci",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{URL}}/api/Fibonacci",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nth\": {{nth}}\n}"
+        }
+      }
+    }
+  ]
+}
