@@ -72,6 +72,40 @@ tablas:
 
 6. Cree una nueva Function que resuleva el problema de Fibonacci pero esta vez utilice un enfoque recursivo con memoization. Pruebe la función varias veces, después no haga nada por al menos 5 minutos. Pruebe la función de nuevo con los valores anteriores. ¿Cuál es el comportamiento?.
 
+Procedemos a modificar la función de fibonacci para implementar la recurrencia con memorización, tenemos la siguiente implementación
+
+<img width="1329" height="915" alt="image" src="https://github.com/user-attachments/assets/74008025-23fb-4957-9eb6-a75b4868aa09" />
+
+Luego procedemos a realizar los mismos pasos anteriores de la guía, desplegando el proyecto a Azure Functions, este es el log resultante
+
+<img width="568" height="299" alt="image" src="https://github.com/user-attachments/assets/62142b38-9406-4d26-9175-7a37fb75c171" />
+
+<img width="613" height="116" alt="image" src="https://github.com/user-attachments/assets/8518d51c-ddab-4806-bd78-9c0aa999e954" />
+
+Procedemos a probar desde Azure que la función responde correctamente
+
+Input:
+
+<img width="1875" height="966" alt="image" src="https://github.com/user-attachments/assets/966b068f-87c5-454c-8e4e-791b070862b7" />
+
+Output:
+
+<img width="1876" height="965" alt="image" src="https://github.com/user-attachments/assets/64f54b4d-7ed0-4054-9765-e641d5251c60" />
+
+Ahora vamos a demostrar el comportamiento después de 5 minutos de inactividad, esto lo realizaremos por medio de PowerShell para medir el tiempo de respuesta de la Azure Function, lo realizamos de la siguiente manera
+
+Realizamos 3 llamados seguidos a la aplicación
+
+<img width="928" height="764" alt="image" src="https://github.com/user-attachments/assets/8dcb7c7d-590e-48e0-954c-62261138cb5d" />
+
+Esperamos 5 minutos y realizamos el mismo llamado
+
+<img width="758" height="271" alt="image" src="https://github.com/user-attachments/assets/34f65e24-c035-44e0-bd4c-5cef7e28f792" />
+
+Como podemos evidenciar en los resultados, al realizar el llamado después de los 5 minutos el tiempo en milisegundos ha aumentado considerablemente, este comportamiento se conoce como "cold start" que ocurre cuando la función lleva tiempo sin ser usada, por lo que Azure para ahorrar recursos descarga la instancia, luego cuando se vuelve a realizar el llamado, azure debe asignar un contenedor inicializar el runtime Node.js, montar el function app, cargar dependencias y ejecutar POR PRIMERA VEZ la función.
+
+La función respondió al principio con tiempos considerablemente bajos, este comportamiento se conoce como "warm start" ya que al quedar la function app inicializada, no se necesita activar otro contenedor o cargar dependencias por lo que los llamados son más rápidos.
+
 **Preguntas**
 
 * ¿Qué es un Azure Function?
@@ -103,6 +137,53 @@ tablas:
    Sin ese Storage Account, el Function App no puede iniciarse, ya que depende de esos archivos internos para funcionar.
 
 * ¿Cuáles son los tipos de planes para un Function App?, ¿En qué se diferencias?, mencione ventajas y desventajas de cada uno de ellos.
+  Azure Functions tiene varios planes de hospedaje, cada uno ligado al rendimiento, costo y disponibilidad
+  1. Plan de Consumo:
+     * Características:
+         * Modelo serverless: paga por ejecución.
+         * Escala automáticamente según demanda.
+         * Las instancias "duermen" cuando no hay tráfico (cold start).
+    * Ventajas:
+         * Costo bajo.
+         * Escalabilidad automática SIN configuración de usuario.
+         * Ideal para cargas irregulares o poco frecuentes.
+    * Desventajas:
+         * Puede presentar cold starts cuando la función no se usa por varios minutos.
+         * Tiempo máximo de ejecución: 10 minutos por defecto (ampliable a 30).
+         * Sin acceso completo a infraestructura dedicada.
+  2. Plan Premium
+    *  Características:
+         * Escalado automático, pero con instancias precalentadas (no hay cold starts).
+         * Instancias dedicadas con memoria y CPU superior.
+         * Soporta funciones de larga duración.
+    *  Ventajas:
+         * Sin cold starts.
+         * Mejor rendimiento.
+         * Permite VNET, funciones más pesadas y ejecución por más tiempo.
+         * Ideal para APIs con tráfico estable o crítico.
+    *  Desventajas:
+         * Más costoso, incluso si no hay tráfico.
+         * Se paga por instancia reservada, no solo por ejecución.
+  3. Plan Dedicado
+    * Características:
+         * Ejecuta Functions sobre máquinas del App Service siempre activas.
+         * No es serverless: las instancias son totalmente dedicadas.
+    * Ventajas:
+         * No hay cold starts (instancia siempre encendida).
+         * Control total sobre tamaño y número de máquinas.
+         * Útil si ya se tiene un App Service Plan con capacidad sobrante.
+    * Desventajas:
+         * El más costoso de todos: se paga la máquina completa 24/7.
+         * Escalado manual o semiautomático.
+         * No está pensado para cargas irregulares.
 * ¿Por qué la memoization falla o no funciona de forma correcta?
+  La memorización falla porque  la function app no garantiza que la misma instancia ejecute todas las peticiones, ya que Azure fuctions
+  1. Crea instancias efímeras: Cada ejecución puede ser atentidad por una instancia diferente.
+  2. La instancia puede "dormirse" como mencionamos anteriormente
+  3. El código no persiste entre ejecuciones
 * ¿Cómo funciona el sistema de facturación de las Function App?
-* Informe
+  La facturación depende del tipo de plan
+
+  1. Plan de Consumo: Pagas por millon de ejecuciones, el primer millon por mes es gratis
+  2. Plan Premium: Pagas por número de instancias reservadas, el tamaño de la maquina y el tiempo en que las instancias estan activas
+  3. Plan Dedicado: Pagas por la maquina completa 24/7 independientemente si la función se ejecuta o no.
